@@ -1,0 +1,9 @@
+(qwen) admin1@ngtrandat-1:~/Documents/qwen$ python main.py 
+audio_start_id: 155163, audio_end_id: 155164, audio_pad_id: 151851.
+The model is automatically converting to bf16 for faster inference. If you want to disable the automatic precision, please manually add bf16/fp16/fp32=True to "AutoModelForCausalLM.from_pretrained".
+Try importing flash-attention for faster inference...
+Warning: import flash_attn rotary fail, please install FlashAttention rotary to get higher efficiency https://github.com/Dao-AILab/flash-attention/tree/main/csrc/rotary
+Warning: import flash_attn rms_norm fail, please install FlashAttention layer_norm to get higher efficiency https://github.com/Dao-AILab/flash-attention/tree/main/csrc/layer_norm
+Warning: import flash_attn fail, please install FlashAttention to get higher efficiency https://github.com/Dao-AILab/flash-attention
+Loading checkpoint shards: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 9/9 [08:23<00:00, 55.94s/it]
+<audio>./dia1_utt0.wav</audio><|startoftranscription|><|en|><|transcribe|><|en|><|notimestamps|><|wo_itn|>or we could go to the bank, close our accounts, and cut them off at the<|endoftext|>
