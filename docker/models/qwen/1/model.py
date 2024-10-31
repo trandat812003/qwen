@@ -29,8 +29,9 @@ class TritonPythonModel:
 
             print("Input data:", input_strings)
 
-            # audio_url = input_strings[0]
-            audio_url = "./data/dia1_utt0.wav"
+            audio_url = f'./data/{input_strings[0]}'
+            print(audio_url)
+            # audio_url = "./data/dia1_utt0.wav"
             sp_prompt = "<|startoftranscription|><|en|><|transcribe|><|en|><|notimestamps|><|wo_itn|>"
             query = f"<audio>{audio_url}</audio>{sp_prompt}"
 

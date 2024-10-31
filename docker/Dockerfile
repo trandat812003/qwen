@@ -13,10 +13,9 @@ RUN pip install transformers_stream_generator
 RUN pip install einops
 RUN pip install accelerate
 RUN git clone https://github.com/triton-inference-server/python_backend -b r23.10
-# RUN cd python_backends
+RUN mkdir data
 
 COPY ./models /models
-COPY ./data /data
 
 # CMD ["tritonserver", "--model-repository=/models", "--log-format=default", "--log-file=/opt/tritonserver/logfile.log"] 
 # CMD ["tritonserver", "--model-repository=/models", "--cache-config=local,size=1000048576", "--log-verbose=1"]   
