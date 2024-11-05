@@ -1,22 +1,59 @@
+import os
 import torch
-from vllm import LLM, SamplingParams
+from datasets import load_metric
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from transformers.generation import GenerationConfig
 
 
-prompts = [
-    "Hello, my name is",
-    "The president of the United States is",
-    "The capital of France is",
-    "The future of AI is",
-]
-sampling_params = SamplingParams(temperature=0.8, top_p=0.95)
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# print(device)
+
+metric = load_metric("wer")
+
+data_folder = './data/121123/'
 
 
-llm = LLM(model="Qwen/Qwen-7B")
+torch.cuda.empty_cache()
 
+ground_truth = {}
+with open(os.path.join(data_folder, '84-121123.trans.txt'), 'r') as f:
+    for line in f:
+        file_id, text = line.strip().split(' ', 1)
+        ground_truth[file_id] = text
 
-outputs = llm.generate(prompts, sampling_params)
+MODEL_PRETRAIN = "Qwen/Qwen-Audio"
 
-for output in outputs:
-    prompt = output.prompt
-    generated_text = output.outputs[0].text
-    print(f"Prompt: {prompt!r}, Generated text: {generated_text!r}")
+bnb_config = BitsAndBytesConfig(load_in_8bit=True)
+tokenizer = AutoTokenizer.from_pretrained(MODEL_PRETRAIN, trust_remote_code=True)
+model = AutoModelForCausalLM.from_pretrained(
+    MODEL_PRETRAIN,
+    quantization_config=bnb_config,
+    trust_remote_code=True,
+    device_map="cuda:6"
+)
+model.generation_config = GenerationConfig.from_pretrained(MODEL_PRETRAIN, trust_remote_code=True)
+print(model.device)
+
+hypotheses = []
+references = []
+for file_id, text in ground_truth.items():
+    audio_file = os.path.join(data_folder, f'{file_id}.flac')
+
+    sp_prompt = "<|startoftranscription|><|en|><|transcribe|><|en|><|notimestamps|><|wo_itn|>"
+    query = f"<audio>{audio_file}</audio>{sp_prompt}"
+    audio_info = tokenizer.process_audio(query)
+    inputs = tokenizer(query, return_tensors='pt', audio_info=audio_info).to(model.device)
+
+    torch.cuda.empty_cache()
+
+    pred = model.generate(**inputs, audio_info=audio_info)
+    response = tokenizer.decode(pred.cpu()[0], skip_special_tokens=True, audio_info=audio_info)
+
+    hypotheses.append(response)
+    references.append(text)
+
+    print(f"File: {file_id}, Ground Truth: {text}")
+    print(f"Prediction: {response}\n")
+
+wer = metric.compute(predictions=hypotheses, references=references)
+print(wer)
