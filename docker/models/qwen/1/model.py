@@ -7,13 +7,10 @@ import triton_python_backend_utils as pb_utils
 
 class TritonPythonModel:
     def initialize(self, args):
-        self.sample_rate = 16000
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
         MODEL_PRETRAIN = "Qwen/Qwen-Audio"
 
         self.tokenizer = AutoTokenizer.from_pretrained(MODEL_PRETRAIN, trust_remote_code=True)
-        self.model = AutoModelForCausalLM.from_pretrained(MODEL_PRETRAIN, device_map="cpu", trust_remote_code=True, bf16=True).eval()
+        self.model = AutoModelForCausalLM.from_pretrained(MODEL_PRETRAIN, trust_remote_code=True, torch_dtype=torch.int8,)
         self.model.generation_config = GenerationConfig.from_pretrained(MODEL_PRETRAIN, trust_remote_code=True)
 
         model_config = json.loads(args['model_config'])
@@ -39,7 +36,7 @@ class TritonPythonModel:
             inputs = self.tokenizer(query, return_tensors='pt', audio_info=audio_info)
             inputs = inputs.to(self.model.device)
             pred = self.model.generate(**inputs, audio_info=audio_info)
-            response = self.tokenizer.decode(pred.cpu()[0], skip_special_tokens=False,audio_info=audio_info)
+            response = self.tokenizer.decode(pred.cpu()[0], skip_special_tokens=True,audio_info=audio_info)
 
             output_data = np.array([response], dtype=object)
             output_tensor = pb_utils.Tensor("OUTPUT", output_data.astype(self.output_type))
